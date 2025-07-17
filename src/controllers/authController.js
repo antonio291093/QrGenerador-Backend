@@ -2,6 +2,29 @@ const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
+exports.me = async (req, res) => {
+  // Obtener la cookie llamada "token"
+  const token = req.cookies.token;
+
+  if (!token) {
+    return res.status(401).json({ message: "No autenticado" });
+  }
+
+  try {
+    // Verificar y decodificar el token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id).select(
+      "email _id mustChangePassword"
+    );
+    if (!user) {
+      return res.status(404).json({ message: "Usuario no encontrado" });
+    }
+    res.json({ user });
+  } catch (err) {
+    return res.status(401).json({ message: "Token inválido o expirado" });
+  }
+};
+
 exports.login = async (req, res) => {
   const { email, password } = req.body;
   try {
