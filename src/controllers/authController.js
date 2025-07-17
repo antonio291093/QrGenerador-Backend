@@ -5,13 +5,18 @@ const jwt = require("jsonwebtoken");
 exports.login = async (req, res) => {
   const { email, password } = req.body;
   try {
+    console.log("[LOGIN] Intento de login para:", email);
     const user = await User.findOne({ email });
-    if (!user)
+    if (!user) {
+      console.warn("[LOGIN] Usuario no encontrado:", email);
       return res.status(401).json({ message: "Usuario no encontrado" });
+    }
 
     const valid = await bcrypt.compare(password, user.password);
-    if (!valid)
+    if (!valid) {
+      console.warn("[LOGIN] Contraseña incorrecta para:", email);
       return res.status(401).json({ message: "Contraseña incorrecta" });
+    }
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "1d",
@@ -19,20 +24,22 @@ exports.login = async (req, res) => {
 
     res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // Solo HTTPS en producción
-      sameSite: "lax", // O 'strict' según tu necesidad
-      maxAge: 24 * 60 * 60 * 1000, // 1 día
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 24 * 60 * 60 * 1000,
       path: "/",
     });
 
+    console.log("[LOGIN] Login exitoso:", email);
     res.json({
       user: {
         id: user._id,
         email: user.email,
-        mustChangePassword: user.mustChangePassword, // <-- Devuelve el estado
+        mustChangePassword: user.mustChangePassword,
       },
     });
   } catch (err) {
+    console.error("[LOGIN] Error inesperado:", err);
     res.status(500).json({ message: "Error de servidor" });
   }
 };
