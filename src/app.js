@@ -5,18 +5,32 @@ const cookieParser = require("cookie-parser");
 
 const app = express();
 
-// Configura CORS para aceptar cookies y peticiones desde el frontend
+// ⚠️ ¡Personaliza este array según el dominio real de tu frontend Vercel!
+const allowedOrigins = [
+  "http://localhost:3000", // Desarrollo local (React)
+  "https://qr-generador-frontend.vercel.app/login", // <-- Cambia esto por tu dominio de Vercel
+];
+
+// CORS seguro para local y producción
 app.use(
   cors({
-    origin: "http://localhost:3000", // Cambia esto por la URL de tu frontend en producción
-    credentials: true,
+    origin: function (origin, callback) {
+      // Permite requests sin origen (ej: Postman, curl)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      } else {
+        return callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true, // Para cookies, JWT, etc.
   })
 );
 
-// Middleware para parsear cookies
+// Parseo de cookies
 app.use(cookieParser());
 
-// Middleware para parsear JSON en las peticiones
+// Parseo de JSON
 app.use(express.json());
 
 // Conexión a MongoDB
@@ -35,7 +49,9 @@ app.use("/api/qrs", qrRoutes);
 const uploadRoutes = require("./routes/uploadRoutes");
 app.use("/api/upload", uploadRoutes);
 
+// (Opcional) Limitador de requests para mayor seguridad
 const apiLimiter = require("./middlewares/rateLimitMiddleware");
 app.use("/api/", apiLimiter);
 
+// Exporta la app para usar con index.js o server.js
 module.exports = app;
