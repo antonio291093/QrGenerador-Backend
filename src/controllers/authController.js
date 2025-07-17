@@ -1,0 +1,68 @@
+const User = require("../models/User");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+
+exports.login = async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const user = await User.findOne({ email });
+    if (!user)
+      return res.status(401).json({ message: "Usuario no encontrado" });
+
+    const valid = await bcrypt.compare(password, user.password);
+    if (!valid)
+      return res.status(401).json({ message: "Contraseña incorrecta" });
+
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "1d",
+    });
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production", // Solo HTTPS en producción
+      sameSite: "lax", // O 'strict' según tu necesidad
+      maxAge: 24 * 60 * 60 * 1000, // 1 día
+      path: "/",
+    });
+
+    res.json({
+      user: {
+        id: user._id,
+        email: user.email,
+        mustChangePassword: user.mustChangePassword, // <-- Devuelve el estado
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Error de servidor" });
+  }
+};
+
+exports.changePassword = async (req, res) => {
+  const { newPassword } = req.body;
+  if (!newPassword || newPassword.length < 8) {
+    return res.status(400).json({
+      message: "La nueva contraseña debe tener al menos 8 caracteres.",
+    });
+  }
+
+  try {
+    const user = await User.findById(req.userId);
+    if (!user)
+      return res.status(404).json({ message: "Usuario no encontrado" });
+
+    // Cambia la contraseña y marca el flag como false
+    const hashed = await bcrypt.hash(newPassword, 10);
+    user.password = hashed;
+    user.mustChangePassword = false;
+    await user.save();
+
+    res.json({ message: "Contraseña cambiada correctamente." });
+  } catch (err) {
+    res.status(500).json({ message: "Error al cambiar la contraseña." });
+  }
+};
+
+exports.logout = (req, res) => {
+  res.clearCookie("token", { path: "/" });
+  res.json({ message: "Sesión cerrada correctamente." });
+};
