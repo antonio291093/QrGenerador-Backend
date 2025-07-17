@@ -5,25 +5,22 @@ const cookieParser = require("cookie-parser");
 
 const app = express();
 
-// ⚠️ ¡Personaliza este array según el dominio real de tu frontend Vercel!
 const allowedOrigins = [
-  "http://localhost:3000", // Desarrollo local (React)
-  "https://qr-generador-frontend.vercel.app", // <-- Cambia esto por tu dominio de Vercel
+  "http://localhost:3000",
+  "https://qr-generador-frontend.vercel.app",
 ];
 
-// CORS seguro para local y producción
 app.use(
   cors({
     origin: function (origin, callback) {
-      // Permite requests sin origen (ej: Postman, curl)
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
+      console.log("CORS origin request:", origin);
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
       } else {
-        return callback(new Error("Not allowed by CORS"));
+        callback(new Error("Not allowed by CORS"));
       }
     },
-    credentials: true, // Para cookies, JWT, etc.
+    credentials: true,
   })
 );
 
