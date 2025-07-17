@@ -8,7 +8,7 @@ const app = express();
 // ⚠️ ¡Personaliza este array según el dominio real de tu frontend Vercel!
 const allowedOrigins = [
   "http://localhost:3000", // Desarrollo local (React)
-  "https://qr-generador-frontend.vercel.app/", // <-- Cambia esto por tu dominio de Vercel
+  "https://qr-generador-frontend.vercel.app", // <-- Cambia esto por tu dominio de Vercel
 ];
 
 // CORS seguro para local y producción
