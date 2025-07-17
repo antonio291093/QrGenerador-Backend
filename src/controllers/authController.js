@@ -93,6 +93,11 @@ exports.changePassword = async (req, res) => {
 };
 
 exports.logout = (req, res) => {
-  res.clearCookie("token", { path: "/" });
+  res.clearCookie("token", {
+    httpOnly: true,
+    sameSite: "none", // 👈 igual que al setear la cookie
+    secure: true, // 👈 igual que al setear la cookie
+    path: "/",
+  });
   res.json({ message: "Sesión cerrada correctamente." });
 };
