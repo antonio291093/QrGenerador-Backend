@@ -24,8 +24,8 @@ exports.login = async (req, res) => {
 
     res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
+      secure: true, // debe ser true cuando usas HTTPS (Render y Vercel lo son)
+      sameSite: "none", // NECESARIO para cross-domain HTTPS
       maxAge: 24 * 60 * 60 * 1000,
       path: "/",
     });
